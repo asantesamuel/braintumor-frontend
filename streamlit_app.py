@@ -23,7 +23,7 @@ with st.expander('About this app'):
   st.markdown('Data sets:')
   st.code('''- Drug solubility data set
   ''', language='markdown')
-  
+
   st.markdown('Libraries used:')
   st.code('''- Pandas for data wrangling
 - Scikit-learn for building a machine learning model
@@ -41,7 +41,7 @@ with st.sidebar:
     uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file, index_col=False)
-      
+
     # Download example data
     @st.cache_data
     def convert_df(input_df):
@@ -83,7 +83,7 @@ with st.sidebar:
 # Initiate the model building process
 if uploaded_file or example_data: 
     with st.status("Running ...", expanded=True) as status:
-    
+
         st.write("Loading data ...")
         time.sleep(sleep_time)
 
@@ -91,18 +91,18 @@ if uploaded_file or example_data:
         time.sleep(sleep_time)
         X = df.iloc[:,:-1]
         y = df.iloc[:,-1]
-            
+
         st.write("Splitting data ...")
         time.sleep(sleep_time)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=(100-parameter_split_size)/100, random_state=parameter_random_state)
-    
+
         st.write("Model training ...")
         time.sleep(sleep_time)
 
         if parameter_max_features == 'all':
             parameter_max_features = None
             parameter_max_features_metric = X.shape[1]
-        
+
         rf = RandomForestRegressor(
                 n_estimators=parameter_n_estimators,
                 max_features=parameter_max_features,
@@ -113,19 +113,19 @@ if uploaded_file or example_data:
                 bootstrap=parameter_bootstrap,
                 oob_score=parameter_oob_score)
         rf.fit(X_train, y_train)
-        
+
         st.write("Applying model to make predictions ...")
         time.sleep(sleep_time)
         y_train_pred = rf.predict(X_train)
         y_test_pred = rf.predict(X_test)
-            
+
         st.write("Evaluating performance metrics ...")
         time.sleep(sleep_time)
         train_mse = mean_squared_error(y_train, y_train_pred)
         train_r2 = r2_score(y_train, y_train_pred)
         test_mse = mean_squared_error(y_test, y_test_pred)
         test_r2 = r2_score(y_test, y_test_pred)
-        
+
         st.write("Displaying performance metrics ...")
         time.sleep(sleep_time)
         parameter_criterion_string = ' '.join([x.capitalize() for x in parameter_criterion.split('_')])
@@ -138,7 +138,7 @@ if uploaded_file or example_data:
             rf_results[col] = pd.to_numeric(rf_results[col], errors='ignore')
         # Round to 3 digits
         rf_results = rf_results.round(3)
-        
+
     status.update(label="Status", state="complete", expanded=False)
 
     # Display data info
@@ -148,7 +148,7 @@ if uploaded_file or example_data:
     col[1].metric(label="No. of X variables", value=X.shape[1], delta="")
     col[2].metric(label="No. of Training samples", value=X_train.shape[0], delta="")
     col[3].metric(label="No. of Test samples", value=X_test.shape[0], delta="")
-    
+
     with st.expander('Initial dataset', expanded=True):
         st.dataframe(df, height=210, use_container_width=True)
     with st.expander('Train split', expanded=False):
@@ -174,7 +174,7 @@ if uploaded_file or example_data:
     y_train.to_csv('y_train.csv', index=False)
     X_test.to_csv('X_test.csv', index=False)
     y_test.to_csv('y_test.csv', index=False)
-    
+
     list_files = ['dataset.csv', 'X_train.csv', 'y_train.csv', 'X_test.csv', 'y_test.csv']
     with zipfile.ZipFile('dataset.zip', 'w') as zipF:
         for file in list_files:
@@ -187,20 +187,20 @@ if uploaded_file or example_data:
                 file_name="dataset.zip",
                 mime="application/octet-stream"
                 )
-    
+
     # Display model parameters
     st.header('Model parameters', divider='rainbow')
     parameters_col = st.columns(3)
     parameters_col[0].metric(label="Data split ratio (% for Training Set)", value=parameter_split_size, delta="")
     parameters_col[1].metric(label="Number of estimators (n_estimators)", value=parameter_n_estimators, delta="")
     parameters_col[2].metric(label="Max features (max_features)", value=parameter_max_features_metric, delta="")
-    
+
     # Display feature importance plot
     importances = rf.feature_importances_
     feature_names = list(X.columns)
     forest_importances = pd.Series(importances, index=feature_names)
     df_importance = forest_importances.reset_index().rename(columns={'index': 'feature', 0: 'value'})
-    
+
     bars = alt.Chart(df_importance).mark_bar(size=40).encode(
              x='value:Q',
              y=alt.Y('feature:N', sort='-x')
@@ -220,16 +220,16 @@ if uploaded_file or example_data:
     s_y_train_pred = pd.Series(y_train_pred, name='predicted').reset_index(drop=True)
     df_train = pd.DataFrame(data=[s_y_train, s_y_train_pred], index=None).T
     df_train['class'] = 'train'
-        
+
     s_y_test = pd.Series(y_test, name='actual').reset_index(drop=True)
     s_y_test_pred = pd.Series(y_test_pred, name='predicted').reset_index(drop=True)
     df_test = pd.DataFrame(data=[s_y_test, s_y_test_pred], index=None).T
     df_test['class'] = 'test'
-    
+
     df_prediction = pd.concat([df_train, df_test], axis=0)
-    
+
     prediction_col = st.columns((2, 0.2, 3))
-    
+
     # Display dataframe
     with prediction_col[0]:
         st.dataframe(df_prediction, height=320, use_container_width=True)
@@ -243,7 +243,7 @@ if uploaded_file or example_data:
                   )
         st.altair_chart(scatter, theme='streamlit', use_container_width=True)
 
-    
+
 # Ask for CSV upload if none is detected
 else:
     st.warning('👈 Upload a CSV file or click *"Load example data"* to get started!')
